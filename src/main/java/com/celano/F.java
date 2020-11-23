@@ -1,19 +1,17 @@
 package com.celano;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Cookie;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-public class Facebook {
+public class F {
     private WebDriver webDriver;
     private ObjectMapper objectMapper;
     private String account;
@@ -32,7 +30,7 @@ public class Facebook {
         this.pass = pass;
     }
 
-    public Facebook(WebDriver webDriver) {
+    public F(WebDriver webDriver) {
         this.webDriver = webDriver;
         this.objectMapper = new ObjectMapper();
     }
@@ -57,7 +55,6 @@ public class Facebook {
         WebElement loginElement = new WebDriverWait(this.webDriver, 10)
                 .until(ExpectedConditions.presenceOfElementLocated(By.id("u_0_b")));
         loginElement.click();
-//        this.webDriver.switchTo().alert().dismiss();
     }
 
     public boolean isLoginSuccess() {
@@ -77,14 +74,10 @@ public class Facebook {
             file.createNewFile();
             FileWriter fileWriter = new FileWriter(file);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-
             for (Cookie ck : this.webDriver.manage().getCookies()) {
                 bufferedWriter.write(ck.getName() + "|" + ck.getValue() + "|" + ck.getDomain() + "|" + ck.getPath() + "|" + ck.getExpiry() + "|" + ck.isSecure());
                 bufferedWriter.newLine();
             }
-//            String s = this.objectMapper.writeValueAsString(this.webDriver.manage().getCookies());
-//            bufferedWriter.write(s);
-
             bufferedWriter.close();
             fileWriter.close();
         } catch (Exception e) {
@@ -101,12 +94,7 @@ public class Facebook {
             webDriver.get(this.url);
             String strline;
             while ((strline = bufferedReader.readLine()) != null) {
-//            if (bufferedReader.readLine() != null) {
-//                CookiesUser[] cookiesUsers = this.objectMapper.readValue(bufferedReader.readLine(), CookiesUser[]);
-//            }
                 String[] token = strline.split("\\|");
-
-//                while (token.hasMoreTokens()) {
                 String name = token[0];
                 String value = token[1];
                 String domain = token[2];
@@ -119,10 +107,7 @@ public class Facebook {
                 boolean isSecure = Boolean.parseBoolean(token[5]);
                 Cookie ck = new Cookie(name, value, domain, path, expiry, isSecure);
                 System.out.println(ck);
-//                    for (CookiesUser cookiesUser : cookiesUsers) {
-//                    }
                 this.webDriver.manage().addCookie(ck);
-//                }
             }
             webDriver.get(this.url);
         } catch (Exception e) {
@@ -139,6 +124,22 @@ public class Facebook {
         }
         if (isLoginSuccess()) {
             this.saveCookies();
+        }
+    }
+
+    public void pageRefreshToBottom(String item) {
+        if (item.equals("users")) {
+            while (true) {
+                try {
+                    WebDriverWait wait = new WebDriverWait(this.webDriver, 3);
+                    wait.pollingEvery(500, TimeUnit.MILLISECONDS);
+                    wait.until(ExpectedConditions.presenceOfElementLocated(By.id("email")));
+                    break;
+                } catch (Exception e) {
+                    ((JavascriptExecutor) this.webDriver).executeScript("window.scrollTo(0, document.body.scrollHeight);");
+                    WebDriver.Timeouts timeouts = this.webDriver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+                }
+            }
         }
     }
 }
